@@ -5,8 +5,7 @@ services:
         command: webserver
         restart: always
         depends_on:
-            - postgres
-            - celery
+            - rabbit
         environment:
             - EXECUTOR=$EXECUTOR
             - AIRFLOW__CELERY__BROKER_URL=$AIRFLOW__CELERY__BROKER_URL
@@ -20,6 +19,8 @@ services:
             - ./dags:/usr/local/airflow/dags
         networks:
             - task-network
+        ports:
+            - 80:8080
         healthcheck:
             test: ["CMD-SHELL", "[ -f /usr/local/airflow/airflow-webserver.pid ]"]
             interval: 30s
@@ -56,20 +57,21 @@ services:
 
     flower:
         build: .
-        command: flower --url_prefix=flower --basic_auth=$FLOWER_USER:$FLOWER_PASSWORD
+        command: flower --url_prefix=flower --basic_auth=$FLOWER_USER:$FLOWER_PASS
         restart: always
         depends_on:
-            - celery
+            - rabbit
         environment:
             - EXECUTOR=$EXECUTOR
         networks:
             - task-network
 
-    worker_1:
+    worker:
         build: .
         command: worker
         restart: always
         depends_on:
+            - rabbit
             - scheduler
         volumes:
             - ./dags:/usr/local/airflow/dags

@@ -19,6 +19,7 @@ ENV buildDeps=' \
               libssl-dev \
               libffi-dev \
               libpq-dev \
+              librabbitmq-dev \
               git \
               '
 
@@ -29,6 +30,8 @@ RUN apt-get update -yqq \
  && apt-get install -yqq --no-install-recommends $buildDeps \
     freetds-bin \
     build-essential \
+    cmake \
+    autoconf \
     apt-utils \
     curl \
     rsync \
@@ -39,9 +42,9 @@ RUN apt-get update -yqq \
 RUN sed -i 's/^# en_US.UTF-8 UTF-8$/en_US.UTF-8 UTF-8/g' /etc/locale.gen \
  && locale-gen \
  && update-locale LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 \
- && useradd -ms /bin/bash -d ${AIRFLOW_USER_HOME} airflow \
+ && useradd -ms /bin/bash -d ${AIRFLOW_HOME} airflow \
  && pip install -U pip setuptools wheel \
-    pip-tools
+    pip-tools \
     pytz \
     pyOpenSSL \
     ndg-httpsclient \
@@ -52,7 +55,7 @@ RUN sed -i 's/^# en_US.UTF-8 UTF-8$/en_US.UTF-8 UTF-8/g' /etc/locale.gen \
 WORKDIR ${AIRFLOW_HOME}
 COPY requirements.* .
 RUN pip-compile requirements.in > requirements.txt
-RUN pip install -U -r requirements.txt
+RUN pip-sync
 
 # package installation cleanup
 RUN apt-get purge --auto-remove -yqq $buildDeps \

@@ -29,4 +29,5 @@ if [ "$AIRFLOW__CORE__EXECUTOR" = "CeleryExecutor"  ]; then
     export AIRFLOW__CELERY__RESULT_BACKEND
 fi
 
-airflow "$@"
+airflow initdb \
+ && airflow "$@"

@@ -1,5 +1,6 @@
 pyamqp
-psycopg2
-apache-airflow[async,azure,celery,hdfs,password,rabbitmq,slack,ssh]
+psycopg2-binary
+azure-storage-blob
+apache-airflow[async,celery,hdfs,password,slack,ssh]
 
 
