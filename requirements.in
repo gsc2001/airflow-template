@@ -1,0 +1,5 @@
+pyamqp
+psycopg2
+apache-airflow[async,azure,celery,hdfs,password,rabbitmq,slack,ssh]
+
+

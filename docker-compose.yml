@@ -1,0 +1,89 @@
+version: '3.4'
+services:
+    webserver:
+        build: .
+        command: webserver
+        restart: always
+        depends_on:
+            - postgres
+            - celery
+        environment:
+            - EXECUTOR=$EXECUTOR
+            - AIRFLOW__CELERY__BROKER_URL=$AIRFLOW__CELERY__BROKER_URL
+            - POSTGRES_USER=$POSTGRES_USER
+            - POSTGRES_PASSWORD=$POSTGRES_PASSWORD
+            - POSTGRES_HOST=$POSTGRES_HOST
+            - POSTGRES_PORT=$POSTGRES_PORT
+            - POSTGRES_DB=$POSTGRES_DB
+            - POSTGRES_EXTRAS=$POSTGRES_EXTRAS
+        volumes:
+            - ./dags:/usr/local/airflow/dags
+        networks:
+            - task-network
+        healthcheck:
+            test: ["CMD-SHELL", "[ -f /usr/local/airflow/airflow-webserver.pid ]"]
+            interval: 30s
+            timeout: 30s
+            retries: 3
+
+    scheduler:
+        build: .
+        command: scheduler
+        restart: always
+        depends_on:
+            - webserver
+        volumes:
+            - ./dags:/usr/local/airflow/dags
+        environment:
+            - EXECUTOR=$EXECUTOR
+            - AIRFLOW__CELERY__BROKER_URL=$AIRFLOW__CELERY__BROKER_URL
+            - POSTGRES_USER=$POSTGRES_USER
+            - POSTGRES_PASSWORD=$POSTGRES_PASSWORD
+            - POSTGRES_HOST=$POSTGRES_HOST
+            - POSTGRES_PORT=$POSTGRES_PORT
+            - POSTGRES_DB=$POSTGRES_DB
+            - POSTGRES_EXTRAS=$POSTGRES_EXTRAS
+
+    rabbit:
+        image: rabbitmq:3-management
+        restart: always
+        hostname: rabbit
+        environment:
+            - RABBITMQ_DEFAULT_USER=$RABBIT_USER
+            - RABBITMQ_DEFAULT_PASSWORD=$RABBIT_PASS
+        networks:
+            - task-network
+
+    flower:
+        build: .
+        command: flower --url_prefix=flower --basic_auth=$FLOWER_USER:$FLOWER_PASSWORD
+        restart: always
+        depends_on:
+            - celery
+        environment:
+            - EXECUTOR=$EXECUTOR
+        networks:
+            - task-network
+
+    worker_1:
+        build: .
+        command: worker
+        restart: always
+        depends_on:
+            - scheduler
+        volumes:
+            - ./dags:/usr/local/airflow/dags
+        environment:
+            - EXECUTOR=$EXECUTOR
+            - AIRFLOW__CELERY__BROKER_URL=$AIRFLOW__CELERY__BROKER_URL
+            - POSTGRES_USER=$POSTGRES_USER
+            - POSTGRES_PASSWORD=$POSTGRES_PASSWORD
+            - POSTGRES_HOST=$POSTGRES_HOST
+            - POSTGRES_PORT=$POSTGRES_PORT
+            - POSTGRES_DB=$POSTGRES_DB
+            - POSTGRES_EXTRAS=$POSTGRES_EXTRAS
+
+networks:
+    task-network:
+        driver: bridge
+
