@@ -46,7 +46,9 @@ services:
         restart: always
         depends_on:
             - webserver
-            - worker_i
+            - worker_0
+            - worker_1
+            - worker_2
         networks:
             - task_network
         volumes:
@@ -99,10 +101,62 @@ services:
             timeout: 30s
             retries: 3
 
-    worker_i:
+    worker_0:
         build: .
-        hostname: worker_i
-        command: worker -cn worker_i
+        hostname: worker_0
+        command: worker -cn worker_0
+        restart: always
+        depends_on:
+            - rabbit
+        volumes:
+            - ./dags:/usr/local/airflow/dags
+        networks:
+            - task_network
+        environment:
+            - EXECUTOR=$EXECUTOR
+            - AIRFLOW__CELERY__BROKER_URL=$AIRFLOW__CELERY__BROKER_URL
+            - POSTGRES_USER=$POSTGRES_USER
+            - POSTGRES_PASSWORD=$POSTGRES_PASSWORD
+            - POSTGRES_HOST=$POSTGRES_HOST
+            - POSTGRES_PORT=$POSTGRES_PORT
+            - POSTGRES_DB=$POSTGRES_DB
+            - POSTGRES_EXTRAS=$POSTGRES_EXTRAS
+        healthcheck:
+            test: ["CMD-SHELL", "[ -f /usr/local/airflow/airflow-worker.pid ]"]
+            interval: 30s
+            timeout: 30s
+            retries: 3
+
+    worker_1:
+        build: .
+        hostname: worker_1
+        command: worker -cn worker_1
+        restart: always
+        depends_on:
+            - rabbit
+        volumes:
+            - ./dags:/usr/local/airflow/dags
+        networks:
+            - task_network
+        environment:
+            - EXECUTOR=$EXECUTOR
+            - AIRFLOW__CELERY__BROKER_URL=$AIRFLOW__CELERY__BROKER_URL
+            - POSTGRES_USER=$POSTGRES_USER
+            - POSTGRES_PASSWORD=$POSTGRES_PASSWORD
+            - POSTGRES_HOST=$POSTGRES_HOST
+            - POSTGRES_PORT=$POSTGRES_PORT
+            - POSTGRES_DB=$POSTGRES_DB
+            - POSTGRES_EXTRAS=$POSTGRES_EXTRAS
+        healthcheck:
+            test: ["CMD-SHELL", "[ -f /usr/local/airflow/airflow-worker.pid ]"]
+            interval: 30s
+            timeout: 30s
+            retries: 3
+
+    worker_2:
+        build: .
+        hostname: worker_2
+        command: worker -cn worker_2
         restart: always
         depends_on:
             - rabbit
