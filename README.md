@@ -1,5 +1,15 @@
 # Airflow Production docker-compose setup
 
+## Acknowledgments
+
+This repo is a culmination of the ideas and code from the following:
+- Docker + Celery
+    - [article](https://medium.com/@xnuinside/quick-tutorial-apache-airflow-with-3-celery-workers-in-docker-composer-9f2f3b445e4)
+    - [repo](https://github.com/xnuinside/airflow_in_docker_compose)
+- [Master + worker node setup
+  article](https://medium.com/@khatri_chetan/how-to-setup-airflow-multi-node-cluster-with-celery-rabbitmq-cfde7756bb6a)
+- [puckel/airflow](https://github.com/puckel/docker-airflow)
+
 ## Introduction
 
 Production grade airflow docker-compose setup:
