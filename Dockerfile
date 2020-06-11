@@ -69,7 +69,10 @@ RUN apt-get purge --auto-remove -yqq $buildDeps \
            /usr/share/doc-base
 
 WORKDIR ${AIRFLOW_HOME}
-COPY --chown=airflow . .
+COPY --chown=airflow ./config/airflow/airflow.cfg .
+COPY --chown=airflow ./entrypoint.sh .
+COPY --chown=airflow ./dags .
+
 USER airflow
 WORKDIR ${AIRFLOW_HOME}
 ENTRYPOINT ["./entrypoint.sh"]

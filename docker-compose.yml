@@ -1,7 +1,21 @@
-version: '3.4'
+version: '3.7'
 services:
+    nginx:
+        image: nginx:latest 
+        ports:
+           - 80:80
+        volumes:
+           - ./config/nginx/:/etc/nginx/conf.d/
+        networks:
+           - web_network
+        depends_on:
+           - webserver
+           - rabbit
+           - flower
+
     webserver:
         build: .
+        hostname: webserver
         command: webserver
         restart: always
         depends_on:
@@ -18,9 +32,8 @@ services:
         volumes:
             - ./dags:/usr/local/airflow/dags
         networks:
-            - task-network
-        ports:
-            - 80:8080
+            - task_network
+            - web_network
         healthcheck:
             test: ["CMD-SHELL", "[ -f /usr/local/airflow/airflow-webserver.pid ]"]
             interval: 30s
@@ -33,6 +46,9 @@ services:
         restart: always
         depends_on:
             - webserver
+            - worker_i
+        networks:
+            - task_network
         volumes:
             - ./dags:/usr/local/airflow/dags
         environment:
@@ -52,29 +68,19 @@ services:
         environment:
             - RABBITMQ_DEFAULT_USER=$RABBIT_USER
             - RABBITMQ_DEFAULT_PASSWORD=$RABBIT_PASS
+        volumes:
+            - rabbit-data:/var/lib/rabbitmq/mnesia/
         networks:
-            - task-network
+            - task_network
+            - web_network
 
     flower:
         build: .
+        hostname: flower
         command: flower --url_prefix=flower --basic_auth=$FLOWER_USER:$FLOWER_PASS
         restart: always
         depends_on:
             - rabbit
-        environment:
-            - EXECUTOR=$EXECUTOR
-        networks:
-            - task-network
-
-    worker:
-        build: .
-        command: worker
-        restart: always
-        depends_on:
-            - rabbit
-            - scheduler
-        volumes:
-            - ./dags:/usr/local/airflow/dags
         environment:
             - EXECUTOR=$EXECUTOR
             - AIRFLOW__CELERY__BROKER_URL=$AIRFLOW__CELERY__BROKER_URL
@@ -84,8 +90,46 @@ services:
             - POSTGRES_PORT=$POSTGRES_PORT
             - POSTGRES_DB=$POSTGRES_DB
             - POSTGRES_EXTRAS=$POSTGRES_EXTRAS
+        networks:
+            - task_network
+            - web_network
+        healthcheck:
+            test: ["CMD-SHELL", "[ -f /usr/local/airflow/airflow-flower.pid ]"]
+            interval: 30s
+            timeout: 30s
+            retries: 3
+
+    worker_i:
+        build: .
+        hostname: worker_i
+        command: worker -cn worker_i
+        restart: always
+        depends_on:
+            - rabbit
+        volumes:
+            - ./dags:/usr/local/airflow/dags
+        networks:
+            - task_network
+        environment:
+            - EXECUTOR=$EXECUTOR
+            - AIRFLOW__CELERY__BROKER_URL=$AIRFLOW__CELERY__BROKER_URL
+            - POSTGRES_USER=$POSTGRES_USER
+            - POSTGRES_PASSWORD=$POSTGRES_PASSWORD
+            - POSTGRES_HOST=$POSTGRES_HOST
+            - POSTGRES_PORT=$POSTGRES_PORT
+            - POSTGRES_DB=$POSTGRES_DB
+            - POSTGRES_EXTRAS=$POSTGRES_EXTRAS
+        healthcheck:
+            test: ["CMD-SHELL", "[ -f /usr/local/airflow/airflow-worker.pid ]"]
+            interval: 30s
+            timeout: 30s
+            retries: 3
 
 networks:
-    task-network:
+    task_network:
+        driver: bridge
+    web_network:
         driver: bridge
 
+volumes:
+    rabbit-data:

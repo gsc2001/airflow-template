@@ -9,11 +9,6 @@ cryptography.fernet import Fernet; FERNET_KEY = Fernet.generate_key().decode();
 print(FERNET_KEY)")}}"
 : "${AIRFLOW__CORE__EXECUTOR:=${EXECUTOR:-Sequential}Executor}"
 
-# Load DAGs examples (default: Yes)
-if [[ -z "$AIRFLOW__CORE__LOAD_EXAMPLES" && "${LOAD_EX:=n}" == n  ]]; then
-    AIRFLOW__CORE__LOAD_EXAMPLES=False
-fi
-
 export \
     AIRFLOW_HOME \
     AIRFLOW__CORE__EXECUTOR \
